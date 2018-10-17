@@ -4,15 +4,16 @@
 int read_file(const char *file_name, char **buffer);
 
 int main(int argc, char **argv) {
-	if (argc != 2) {
-		fprintf(stderr, "Usage: cat <filename>.\n");
+	if (argc < 2) {
+		fprintf(stderr, "Usage: cat <filename...>\n");
 		return 1;
 	}
 
-	char *content;
-	read_file(argv[1], &content);
-
-	printf("-- %s --\n%s\n", argv[1], content);
+	for (int i = 1; i < argc; i++) {
+		char *content;
+		read_file(argv[i], &content);
+		printf("%s", content);
+	}
 
 	return 0;
 }
