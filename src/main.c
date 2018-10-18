@@ -10,9 +10,18 @@ int main(int argc, char **argv) {
 	}
 
 	for (int i = 1; i < argc; i++) {
+		char *file_name = argv[i];
 		char *content;
-		read_file(argv[i], &content);
-		printf("%s", content);
+		if (*file_name == '-') {
+			size_t len = 50;
+			while (getline(&content, &len, stdin) != -1)
+				printf("%s", content);
+			// Clear EOF flag (and other error flags) so stdin can be read again.
+			clearerr(stdin);
+		} else {
+			read_file(file_name, &content);
+			printf("%s", content);
+		}
 	}
 
 	return 0;
