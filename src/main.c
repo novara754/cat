@@ -4,6 +4,8 @@
 #include <unistd.h>
 #include <ctype.h>
 
+void handle_file(const char* file_name, int b_flag, int e_flag, int n_flag, int s_flag, int t_flag, int u_flag, int v_flag);
+void print_char(char c, int e_flag, int t_flag);
 void print_nonprint(unsigned char c);
 
 int main(int argc, char **argv) {
@@ -37,48 +39,55 @@ int main(int argc, char **argv) {
 	}
 
 	for (int i = optind; i < argc; i++) {
-		char *file_name = argv[i];
-		FILE *file = strcmp(file_name, "-") == 0 ? stdin : fopen(file_name, "r");
-
-		int i = 1;
-		char *content = NULL;
-		size_t len = 0;
-		int last_blank;
-		while (getline(&content, &len, file) != -1) {
-			if (!s_flag || !last_blank || *content != '\n') {
-				if ((b_flag && *content != '\n') || n_flag)
-					printf("%6d ", i++);
-
-				if (!v_flag) {
-					printf("%s", content);
-				} else {
-					for (int j = 0; content[j]; j++) {
-						char c = content[j];
-						if ((c >= 32 && c <= 126) || c == '\n' || c == '\t') {
-							if (c == '\t' && t_flag)
-								printf("^I");
-							else if (c == '\n' && e_flag)
-								printf("$\n");
-							else
-								printf("%c", c);
-						} else {
-							print_nonprint(c);
-						}
-					}
-				}
-			}
-
-			if (*content == '\n')
-				last_blank = 1;
-			else
-				last_blank = 0;
-		}
-		
-		free(content);
-		fclose(file);
+		handle_file(argv[i], b_flag, e_flag, n_flag, s_flag, t_flag, u_flag, v_flag);
 	}
 
 	return 0;
+}
+
+// TODO: Change handling of flags so these long parameter lists aren't needed anymore.
+void handle_file(const char* file_name, int b_flag, int e_flag, int n_flag, int s_flag, int t_flag, int u_flag, int v_flag) {
+	FILE *file = strcmp(file_name, "-") == 0 ? stdin : fopen(file_name, "r");
+
+	int i = 1;
+	char *content = NULL;
+	size_t len = 0;
+	int last_blank;
+	while (getline(&content, &len, file) != -1) {
+		if (!s_flag || !last_blank || *content != '\n') {
+			if ((b_flag && *content != '\n') || n_flag)
+				printf("%6d ", i++);
+
+			if (!v_flag) {
+				printf("%s", content);
+			} else {
+				for (int j = 0; content[j]; j++) {
+					print_char(content[j], e_flag, t_flag);
+				}
+			}
+		}
+
+		if (*content == '\n')
+			last_blank = 1;
+		else
+			last_blank = 0;
+	}
+		
+	free(content);
+	fclose(file);
+}
+
+void print_char(char c, int e_flag, int t_flag) {
+	if ((c >= 32 && c <= 126) || c == '\n' || c == '\t') {
+		if (c == '\t' && t_flag)
+			printf("^I");
+		else if (c == '\n' && e_flag)
+			printf("$\n");
+		else
+			printf("%c", c);
+	} else {
+		print_nonprint(c);
+	}
 }
 
 void print_nonprint(unsigned char c) {
