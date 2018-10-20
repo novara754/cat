@@ -4,8 +4,18 @@
 #include <unistd.h>
 #include <ctype.h>
 
-void handle_file(const char* file_name, int b_flag, int e_flag, int n_flag, int s_flag, int t_flag, int u_flag, int v_flag);
-void print_char(char c, int e_flag, int t_flag);
+enum flags_t {
+	b_flag = 1 << 0,
+	e_flag = 1 << 1,
+	n_flag = 1 << 2,
+	s_flag = 1 << 3,
+	t_flag = 1 << 4,
+	u_flag = 1 << 5,
+	v_flag = 1 << 6,
+};
+
+void handle_file(const char* file_name, enum flags_t flags);
+void print_char(char c, enum flags_t flags);
 void print_nonprint(unsigned char c);
 
 int main(int argc, char **argv) {
@@ -17,36 +27,30 @@ int main(int argc, char **argv) {
 	// Disable automatic error messages from getopt.
 	opterr = 0;
 
-	int b_flag = 0,
-		e_flag = 0,
-		n_flag = 0,
-		s_flag = 0,
-		t_flag = 0,
-		u_flag = 0,
-		v_flag = 0;
+	enum flags_t flags = 0;
 
 	char opt;
 	while ((opt = getopt(argc, argv, "benstuv")) != -1) {
 		switch(opt) {
-			case 'b': b_flag = 1; break;
-			case 'e': v_flag = e_flag = 1; break;
-			case 'n': n_flag = 1; break;
-			case 's': s_flag = 1; break;
-			case 't': v_flag = t_flag = 1; break;
-			case 'u': u_flag = 1; break;
-			case 'v': v_flag = 1; break;
+			case 'b': flags |= b_flag; break;
+			case 'e': flags |= v_flag | e_flag; break;
+			case 'n': flags |= n_flag; break;
+			case 's': flags |= s_flag; break;
+			case 't': flags |= v_flag | t_flag; break;
+			case 'u': flags |= u_flag; break;
+			case 'v': flags |= v_flag; break;
 		}	
 	}
 
 	for (int i = optind; i < argc; i++) {
-		handle_file(argv[i], b_flag, e_flag, n_flag, s_flag, t_flag, u_flag, v_flag);
+		handle_file(argv[i], flags);
 	}
 
 	return 0;
 }
 
 // TODO: Change handling of flags so these long parameter lists aren't needed anymore.
-void handle_file(const char* file_name, int b_flag, int e_flag, int n_flag, int s_flag, int t_flag, int u_flag, int v_flag) {
+void handle_file(const char* file_name, enum flags_t flags) {
 	FILE *file = strcmp(file_name, "-") == 0 ? stdin : fopen(file_name, "r");
 
 	int i = 1;
@@ -54,15 +58,15 @@ void handle_file(const char* file_name, int b_flag, int e_flag, int n_flag, int 
 	size_t len = 0;
 	int last_blank;
 	while (getline(&content, &len, file) != -1) {
-		if (!s_flag || !last_blank || *content != '\n') {
-			if ((b_flag && *content != '\n') || n_flag)
+		if (!(flags & s_flag) || !last_blank || *content != '\n') {
+			if ((flags & b_flag && *content != '\n') || (flags & n_flag))
 				printf("%6d ", i++);
 
-			if (!v_flag) {
+			if (!(flags & v_flag)) {
 				printf("%s", content);
 			} else {
 				for (int j = 0; content[j]; j++) {
-					print_char(content[j], e_flag, t_flag);
+					print_char(content[j], flags);
 				}
 			}
 		}
@@ -77,11 +81,11 @@ void handle_file(const char* file_name, int b_flag, int e_flag, int n_flag, int 
 	fclose(file);
 }
 
-void print_char(char c, int e_flag, int t_flag) {
+void print_char(char c, enum flags_t flags) {
 	if ((c >= 32 && c <= 126) || c == '\n' || c == '\t') {
-		if (c == '\t' && t_flag)
+		if (c == '\t' && (flags & t_flag))
 			printf("^I");
-		else if (c == '\n' && e_flag)
+		else if (c == '\n' && (flags & e_flag))
 			printf("$\n");
 		else
 			printf("%c", c);
