@@ -49,7 +49,6 @@ int main(int argc, char **argv) {
 	return 0;
 }
 
-// TODO: Change handling of flags so these long parameter lists aren't needed anymore.
 void handle_file(const char* file_name, enum flags_t flags) {
 	FILE *file = strcmp(file_name, "-") == 0 ? stdin : fopen(file_name, "r");
 
